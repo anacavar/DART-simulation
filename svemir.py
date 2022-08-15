@@ -1,111 +1,116 @@
 import numpy as np
-from planet import Planet
+from tijelo import Tijelo
 
 class Sustav():
-    def __init__(self, sunce):
-        self.Sunce = sunce
-        self.Sunce.x.append(0)
-        self.Sunce.y.append(0)
-        self.Sunce.vx.append(0)
-        self.Sunce.vy.append(0)
-        self.Sunce.ax.append(0)
-        self.Sunce.ay.append(0)
-        self.planeti = []
+    def __init__(self):
+        self.tijela = []
         self.time = [0]
-        pass
 
-    def addPlanet(self, planet):
-        self.planeti.append(planet)
-        print(self.planeti[-1].mass)
-        planet.x.append(planet.r0)
-        planet.vx.append(0)
-        planet.y.append(0)
-        planet.vy.append(planet.v0)
-        Fgx, Fgy=self.__gravitacija(planet)
-        ax=Fgx/planet.mass
-        ay=Fgy/planet.mass
-        planet.ax.append(ax)
-        planet.ay.append(ay)
-        
-    def __gravitacija(self, planet):
-        r = np.sqrt(planet.x[-1]**2+planet.y[-1]**2)
-        # G = 6.67*10**(-11) #newton-metre2-kilogram−2.
-        G = 1
-        Fg = G*planet.mass*self.Sunce.mass/r**2
-        theta = np.arctan(abs((planet.y[-1])/(planet.x[-1])))
-        #prvi kvadrant
-        if planet.x[-1]>=0 and planet.y[-1]>=0:
-            Fg_x = -Fg*np.cos(theta)
-            Fg_y = -Fg*np.sin(theta)
-        #drugi kvadrant
-        if planet.x[-1]<0 and planet.y[-1]>=0:
-            Fg_x = Fg*np.cos(theta)
-            Fg_y = -Fg*np.sin(theta)
-        #treći kvadrant
-        if planet.x[-1]<0 and planet.y[-1]<0:
-            Fg_x = Fg*np.cos(theta)
-            Fg_y = Fg*np.sin(theta)
-        #četvrti kvadrant
-        if planet.x[-1]>=0 and planet.y[-1]<0:
-            Fg_x = -Fg*np.cos(theta)
-            Fg_y = Fg*np.sin(theta)
-        return Fg_x, Fg_y
+    def addPlanet(self, planet, r0, r0_kut, v0, v0_kut):
+        self.tijela.append(planet)
+        # preračunavanje kutova iz stupnjeva u radijane
+        r0_kut = r0_kut*np.pi/180
+        v0_kut = v0_kut*np.pi/180
+        # računanje početnih koordinata
+        x0 = r0*np.cos(r0_kut)
+        y0 = r0*np.sin(r0_kut)
+        v_x0 = v0*np.cos(v0_kut)
+        v_y0 = v0*np.sin(v0_kut)
+        # appendanje početnih vektora
+        planet.r.append(np.array((x0, y0)))
+        planet.v.append(np.array((v_x0, v_y0)))
+        planet.x.append(planet.r[-1][0])
+        planet.y.append(planet.r[-1][1])
 
-        
-    def evolve(self, dt=0.1, t = 100):
+    def shootComet(self, komet, r0, r0_kut, v0, v0_kut):
+        self.tijela.append(komet)
+        self.komet = komet
+        # preračunavanje kutova iz stupnjeva u radijane
+        r0_kut = r0_kut*np.pi/180
+        v0_kut = v0_kut*np.pi/180
+        # računanje početnih koordinata
+        x0 = r0*np.cos(r0_kut)
+        y0 = r0*np.sin(r0_kut)
+        v_x0 = v0*np.cos(v0_kut)
+        v_y0 = v0*np.sin(v0_kut)
+        # appendanje početnih vektora
+        komet.r.append(np.array((x0, y0)))
+        komet.v.append(np.array((v_x0, v_y0)))
+        komet.x.append(komet.r[-1][0])
+        komet.y.append(komet.r[-1][1])
+
+    def evolve(self, dt=2*60*60*24, t = 60*60*24*365.25):
+        # prije gibanja postavimo odnose gravitacijskih sila na tijela
+        self.__apply_gravity()
+        # u svakom trenutku pomaknemo svaki planet za jedan korak
+        self.udaljenosti = []
         while self.time[-1]<t:
-            self.Sunce.move()
-            for planet in self.planeti:
-                Fgx, Fgy=self.__gravitacija(planet)
-                ax=Fgx/planet.mass
-                ay=Fgy/planet.mass
-                planet.move(ax, ay, dt)
+            for tijelo in self.tijela:
+                tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
+                tijelo.move(dt)
             self.time.append(self.time[-1]+dt)
+            # provjerimo je li došlo do sudara kometa i planeta
+            if (self.__planet_pogodjen()):
+                print("Planet je pogođen!")
+                break
+    
+    def __get_impact_conditions():
+        #code here
+        a = 2
+        return a
 
-    # U REALNIM MJERNIM JEDINICAMA
-    def __gravitacija1(self, planet):
-        r = np.sqrt(planet.x[-1]**2+planet.y[-1]**2)
-        G = 6.67*10**(-11) #newton-metre2-kilogram−2.
-        # G = 1
-        Fg = G*planet.mass*self.Sunce.mass/r**2
-        theta = np.arctan(abs((planet.y[-1])/(planet.x[-1])))
-        #prvi kvadrant
-        if planet.x[-1]>=0 and planet.y[-1]>=0:
-            Fg_x = -Fg*np.cos(theta)
-            Fg_y = -Fg*np.sin(theta)
-        #drugi kvadrant
-        if planet.x[-1]<0 and planet.y[-1]>=0:
-            Fg_x = Fg*np.cos(theta)
-            Fg_y = -Fg*np.sin(theta)
-        #treći kvadrant
-        if planet.x[-1]<0 and planet.y[-1]<0:
-            Fg_x = Fg*np.cos(theta)
-            Fg_y = Fg*np.sin(theta)
-        #četvrti kvadrant
-        if planet.x[-1]>=0 and planet.y[-1]<0:
-            Fg_x = -Fg*np.cos(theta)
-            Fg_y = Fg*np.sin(theta)
-        return Fg_x, Fg_y
+    def __planet_pogodjen(self):
+        # gađamo veneru
+        planet = self.tijela[2]
+        udaljenost_kometa_od_planeta = np.sqrt((planet.x[-1]-self.komet.x[-1])**2+(planet.y[-1]-self.komet.y[-1])**2)/100
+        if udaljenost_kometa_od_planeta <= (planet.rad+self.komet.rad):
+            return True
+        else: 
+            return False
+
+    # def __elasticni_sudar(self, tijelo1, tijelo2):
+    #     # zakon očuvanja količine gibanja
+    #     m1 = tijelo1.mass
+    #     r1 = tijelo1.r[-1]
+    #     v1 = tijelo1.v[-1]
+    #     m2 = tijelo1.mass
+    #     r2 = tijelo2.r[-1]
+    #     v2 = tijelo2.v[-1]
+    #     # ||r2-r1||**2
+    #     distance_squared = (tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2
+    #     v1_crtano = v1 - 2*m2/(m1+m2)*np.dot(np.subtract(v1, v2), np.subtract(r1, r2))*np.subtract(r1, r2)/(distance_squared)
+    #     v2_crtano = v2 - 2*m1/(m1+m2)*np.dot(np.subtract(v2, v1), np.subtract(r2, r1))*np.subtract(r2, r1)/(distance_squared)
+    #     tijelo1.v.pop()
+    #     tijelo1.v.append(v1_crtano)
+    #     tijelo2.v.pop()
+    #     tijelo1.v.append(v2_crtano)
+
+    def __apply_gravity(self):
+        # uspostavljanje međudjelovanja planeta prije početka gibanja
+        for tijelo in self.tijela:
+            tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
+
+    def __gravitacija_na_tijelo(self, tijelo):
+        # računa i vraća ukupnu akcečeraciju na pojedini planet u međudjelovanju sa svim ostalim tijelima u sustavu
+        tijela = [i for i in self.tijela]
+        tijela.remove(tijelo)
+        F_ukupna = np.array((0, 0))
+        for tijelo_i in tijela:
+            F_ukupna = np.add(F_ukupna, self.__gravitacija(tijelo, tijelo_i))
+        a = F_ukupna/tijelo.mass
+        return a
+
+    def __gravitacija(self, planet1, planet2):
+        #gravitacijska sila usmjerena od prvog planeta prema drugom
+        G = 6.67*10**(-11) #newton-metre2-kilogram−2
+        r12 = np.subtract(planet2.r[-1], planet1.r[-1])
+        r = np.sqrt(np.dot(r12, r12))
+        F = G*planet1.mass*planet2.mass/r**3 * r12 # vektor u smjeru planeta 2
+        return F
+
+    def clear(self):
+        self.time = [0]
+        self.tijela = []
 
 
-    # broj sekundi u godini 31536000
-    # broj sekundi u danu 86400
-    def evolve1(self, dt=86400, t = 31536000):
-        while self.time[-1]<t:
-            self.Sunce.move()
-            for planet in self.planeti:
-                Fgx, Fgy=self.__gravitacija1(planet)
-                ax=Fgx/planet.mass
-                ay=Fgy/planet.mass
-                planet.move(ax, ay, dt)
-            self.time.append(self.time[-1]+dt)
-
-
-        
-
-
-        
-
-
-
-
+   

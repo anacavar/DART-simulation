@@ -1,0 +1,4 @@
+- ZOKG - savršeno  neelastični sudar
+- dodat mehanizam skužavanja kako odrediti uz koje parametre će meteor pogoditi zemlju
+- računati dvije stvari: 
+  1. 
