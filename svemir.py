@@ -1,10 +1,33 @@
 import numpy as np
-from tijelo import Tijelo
+# from tijelo import Tijelo
+import matplotlib.pyplot as plt
 
 class Sustav():
     def __init__(self):
         self.tijela = []
         self.time = [0]
+
+    def __initial_impulse(self):
+        # ukupna količina gibanja izoliranog sustava mora biti = 0
+        p_x0 = 0
+        p_y0 = 0
+        for tijelo in self.tijela:
+            r0, r0_kut, v0, v0_kut = self.__get_polar_coordinates(tijelo, 0)
+            p_x0 += tijelo.mass*v0*np.cos(v0_kut)
+            p_y0 += tijelo.mass*v0*np.sin(v0_kut)
+        # predajemo negativni izračunati impuls suncu kako bi ukupan impuls sustava bio = 0
+        sunce = self.tijela[0]
+        v_x0 = -p_x0/sunce.mass
+        v_y0 = -p_y0/sunce.mass
+        sunce.v[0] = v0
+        sunce.v[0] = (np.array((v_x0, v_y0)))
+
+    def __get_polar_coordinates(self, tijelo, i=-1):
+        r0 = np.sqrt(tijelo.x[i]**2+tijelo.y[i]**2)
+        r0_kut = np.arctan2(tijelo.y[i], tijelo.x[i])
+        v0 = np.sqrt(np.dot(tijelo.v[i], tijelo.v[i]))
+        v0_kut = np.arctan2(tijelo.v[i][1], tijelo.v[i][0])
+        return r0, r0_kut, v0, v0_kut  
 
     def addPlanet(self, planet, r0, r0_kut, v0, v0_kut):
         self.tijela.append(planet)
@@ -39,61 +62,110 @@ class Sustav():
         komet.x.append(komet.r[-1][0])
         komet.y.append(komet.r[-1][1])
 
-    def evolve(self, dt=2*60*60*24, t = 60*60*24*365.25):
+    def evolve(self, dt=2*60*60*24, t = 2*60*60*24*365.25):
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()
         # u svakom trenutku pomaknemo svaki planet za jedan korak
-        self.udaljenosti = []
         while self.time[-1]<t:
+        # for i in range (500):
             for tijelo in self.tijela:
                 tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
                 tijelo.move(dt)
             self.time.append(self.time[-1]+dt)
             # provjerimo je li došlo do sudara kometa i planeta
-            if (self.__planet_pogodjen()):
-                print("Planet je pogođen!")
+            if (self.__zemlja_pogodjena()):
+                print("Zemlja je pogođena!")
                 break
-    
-    def __get_impact_conditions():
-        #code here
-        a = 2
-        return a
+      
+    def reverseEvolve(self, dt=2*60*60*24, t= 2*60*60*24*365.25):
+        # prije gibanja postavimo odnose gravitacijskih sila na tijela
+        self.__apply_gravity()  
+        # u svakom trenutku pomaknemo svaki planet za jedan korak                                       
+        while self.time[-1]<t:
+            for tijelo in self.tijela:
+                tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
+                tijelo.move(-dt)
+            self.time.append(self.time[-1]+dt)
+            # ako je udaljenost kometa veća od 4 au prekini gibanje
+            au = 1.495978707*10**11 # m (astronomska jedinica = udaljenost Zemlje od Sunca)
+            max_distance = 1*au
+            comet_distance = np.sqrt(np.dot(self.komet.r[-1], self.komet.r[-1]))
+            if (comet_distance >= max_distance):
+                break
 
-    def __planet_pogodjen(self):
-        # gađamo veneru
-        planet = self.tijela[2]
-        udaljenost_kometa_od_planeta = np.sqrt((planet.x[-1]-self.komet.x[-1])**2+(planet.y[-1]-self.komet.y[-1])**2)/100
-        if udaljenost_kometa_od_planeta <= (planet.rad+self.komet.rad):
+    def getDistance(self, tijelo1, tijelo2):
+        udaljenost = np.sqrt((tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2)
+        return udaljenost
+
+    def __zemlja_pogodjena(self):
+        # ova metoda provjerava sjeku li se putanje kometa i Zemlje u zadanom vremenskom intervalu dt
+        zemlja = self.tijela[3]
+
+        # točke pravaca
+        x1_zemlje = zemlja.x[-2]
+        x2_zemlje = zemlja.x[-1]
+        y1_zemlje = zemlja.y[-2]
+        y2_zemlje = zemlja.y[-1]
+
+        x1_kometa = self.komet.x[-2]
+        x2_kometa = self.komet.x[-1]
+        y1_kometa = self.komet.y[-2]
+        y2_kometa = self.komet.y[-1]
+
+        # pravac 1 (Zemlja)
+        a_zemlje = (y2_zemlje-y1_zemlje)/(x2_zemlje-x1_zemlje)
+        b_zemlje = -a_zemlje*x1_zemlje + y1_zemlje
+        # pravac 2 (kometa)
+        a_kometa = (y2_kometa-y1_kometa)/(x2_kometa-x1_kometa)
+        b_kometa = -a_kometa*x1_kometa + y1_kometa
+
+        # računamo koordinate sudara
+        x_collision = (b_kometa-b_zemlje)/(a_zemlje-a_kometa)
+        y_collision = a_zemlje*x_collision + b_zemlje
+
+        uvjet_zemlja = self.uvjet(x_collision, y_collision, x1_zemlje, x2_zemlje, y1_zemlje, y2_zemlje)
+        uvjet_komet = self.uvjet(x_collision, y_collision, x1_kometa, x2_kometa, y1_kometa, y2_kometa)
+
+        if (uvjet_zemlja or uvjet_komet):
             return True
         else: 
             return False
 
-    # def __elasticni_sudar(self, tijelo1, tijelo2):
-    #     # zakon očuvanja količine gibanja
-    #     m1 = tijelo1.mass
-    #     r1 = tijelo1.r[-1]
-    #     v1 = tijelo1.v[-1]
-    #     m2 = tijelo1.mass
-    #     r2 = tijelo2.r[-1]
-    #     v2 = tijelo2.v[-1]
-    #     # ||r2-r1||**2
-    #     distance_squared = (tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2
-    #     v1_crtano = v1 - 2*m2/(m1+m2)*np.dot(np.subtract(v1, v2), np.subtract(r1, r2))*np.subtract(r1, r2)/(distance_squared)
-    #     v2_crtano = v2 - 2*m1/(m1+m2)*np.dot(np.subtract(v2, v1), np.subtract(r2, r1))*np.subtract(r2, r1)/(distance_squared)
-    #     tijelo1.v.pop()
-    #     tijelo1.v.append(v1_crtano)
-    #     tijelo2.v.pop()
-    #     tijelo1.v.append(v2_crtano)
+    def uvjet(self, x, y, x1, x2, y1, y2):
+        # ova metoda provjerava nalazi li se sjecište (x, y) na dužini između točaka 1 i 2
+        delta = 0 # radi testiranja
+        if (x1 < x2):
+            if (y1 < y2):
+                if ((x1 - delta<=x<=x2 + delta) and (y1 -delta<=y<=y2+delta)):
+                    return True
+            if (y1 > y2):
+                if ((x1-delta<=x<=x2+delta) and (y2-delta<=y<=y1+delta)):
+                    return True
+        if (x1 > x2):
+            if (y1 < y2):
+                if ((x2 - delta<=x<=x1+ delta) and (y1-delta<=y<=y2+delta)):
+                    return True
+            if (y1-delta > y2+delta):
+                if ((x2<=x<=x1) and (y2<=y<=y1)):
+                    return True
+        else:
+            return False
 
     def __apply_gravity(self):
         # uspostavljanje međudjelovanja planeta prije početka gibanja
         for tijelo in self.tijela:
             tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
+        # predavanje inicijalnog impulsa Suncu
+        self.__initial_impulse()
 
     def __gravitacija_na_tijelo(self, tijelo):
-        # računa i vraća ukupnu akcečeraciju na pojedini planet u međudjelovanju sa svim ostalim tijelima u sustavu
+        # računa i vraća ukupnu akceleraciju na pojedini planet u međudjelovanju sa svim ostalim tijelima u sustavu
         tijela = [i for i in self.tijela]
         tijela.remove(tijelo)
+        #isključujemo gravitacijsko međudjelovanje zemlje i kometa
+        if(tijelo == self.komet):
+            zemlja = self.tijela[3]
+            tijela.remove(zemlja)
         F_ukupna = np.array((0, 0))
         for tijelo_i in tijela:
             F_ukupna = np.add(F_ukupna, self.__gravitacija(tijelo, tijelo_i))
@@ -108,9 +180,26 @@ class Sustav():
         F = G*planet1.mass*planet2.mass/r**3 * r12 # vektor u smjeru planeta 2
         return F
 
+    def resetSystem(self, i=0):
+        for tijelo in self.tijela:
+            r0 = tijelo.r[i]
+            v0 = tijelo.v[i]
+            a0 = tijelo.a[i]
+            x0 = tijelo.x[i]
+            y0 = tijelo.y[i]
+            tijelo.r = []
+            tijelo.v = []
+            tijelo.a = []
+            tijelo.x = []
+            tijelo.y = []
+            tijelo.r.append(r0)
+            tijelo.v.append(v0)
+            tijelo.a.append(a0)
+            tijelo.x.append(x0)
+            tijelo.y.append(y0)
+
     def clear(self):
         self.time = [0]
         self.tijela = []
 
 
-   

@@ -9,6 +9,10 @@ class Tijelo():
         self.a = []
         self.x = []
         self.y = []
+        self.r0_impact = None
+        self.r0_kut_impact = None
+        self.v0_impact = None
+        self.v0_kut_impact = None
 
     def move(self, dt):
         self.v.append(np.add(self.v[-1], self.a[-1]*dt))
