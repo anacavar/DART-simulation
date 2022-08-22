@@ -29,11 +29,18 @@ radijusMarsa = 3.3895 * 10**6 #m
 udaljenostMarsa = 2.279*10**11 #m
 brzinaMarsa = 2.41*10**4 #m/s
 
-masaKometa = 1014 #kg
-radijusKometa = 10*10**3 #m
+# masaKometa = 1014 #kg
+# radijusKometa = 10*10**3 #m
 udaljenostKometa = 4*udaljenostZemlje # a.u.
-brzinaKometaPriUdaru = 4.8*10**4 #m/s
-kutBrzineKometaPriUdaru = 30 # stupnjeva
+# brzinaKometaPriUdaru = 4.8*10**4 #m/s
+brzinaKometaPriUdaru = 5.8*10**4 #m/s
+# kutBrzineKometaPriUdaru = 30 # stupnjeva
+kutBrzineKometaPriUdaru = 310 # stupnjeva
+
+# DART MISIJA PODACI
+masaKometa = 5.27*10**10 #kg
+radijusKometa = 390 #m
+
 
 # planeti
 Sunce = Tijelo(masaSunca, radijusSunca)
@@ -62,13 +69,23 @@ fig = plt.figure()
 plt.title('Graf')
 plt.axis('equal')
 
+# skica položaja, fokus na sudar kometa sa Zemljom (radi testiranja)
+# plt.xlim(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000)
+# plt.ylim(-10000000000, 10000000000)
+# plt.scatter(Sunce.x, Sunce.y, color="yellow", label="Sunce")
+# plt.scatter(Merkur.x, Merkur.y, color="brown", label="Merkur")
+# plt.scatter(Venera.x, Venera.y, color="orange", label="Venera")
+# plt.scatter(Zemlja.x, Zemlja.y, color="blue", label="Zemlja")
+# plt.scatter(Mars.x, Mars.y, color="green", label="Mars")
+# plt.scatter(Komet.x, Komet.y, color="black", label="komet")
+
 # ANIMACIJA
 def animation_frame(i):
     try:
         plt.clf()
         plt.axis('equal')
-        plt.xlim(-4*udaljenostZemlje, 4*udaljenostZemlje)
-        plt.ylim(-4*udaljenostZemlje, 4*udaljenostZemlje)
+        plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+        plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
         plt.plot(Sunce.x[:i], Sunce.y[:i], label = "Sunce", color = "yellow")
         plt.plot(Merkur.x[:i], Merkur.y[:i], label = "Merkur", color = "brown")
         plt.plot(Venera.x[:i], Venera.y[:i], label = "Venera", color = "orange")

@@ -1,5 +1,4 @@
 import numpy as np
-# from tijelo import Tijelo
 import matplotlib.pyplot as plt
 
 class Sustav():
@@ -62,7 +61,7 @@ class Sustav():
         komet.x.append(komet.r[-1][0])
         komet.y.append(komet.r[-1][1])
 
-    def evolve(self, dt=2*60*60*24, t = 2*60*60*24*365.25):
+    def evolve(self, dt=60*60*24, t = 2*60*60*24*365.25):
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()
         # u svakom trenutku pomaknemo svaki planet za jedan korak
@@ -77,7 +76,7 @@ class Sustav():
                 print("Zemlja je pogođena!")
                 break
       
-    def reverseEvolve(self, dt=2*60*60*24, t= 2*60*60*24*365.25):
+    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25):
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()  
         # u svakom trenutku pomaknemo svaki planet za jedan korak                                       
@@ -88,7 +87,7 @@ class Sustav():
             self.time.append(self.time[-1]+dt)
             # ako je udaljenost kometa veća od 4 au prekini gibanje
             au = 1.495978707*10**11 # m (astronomska jedinica = udaljenost Zemlje od Sunca)
-            max_distance = 1*au
+            max_distance = 2*au
             comet_distance = np.sqrt(np.dot(self.komet.r[-1], self.komet.r[-1]))
             if (comet_distance >= max_distance):
                 break
@@ -126,7 +125,19 @@ class Sustav():
         uvjet_zemlja = self.uvjet(x_collision, y_collision, x1_zemlje, x2_zemlje, y1_zemlje, y2_zemlje)
         uvjet_komet = self.uvjet(x_collision, y_collision, x1_kometa, x2_kometa, y1_kometa, y2_kometa)
 
-        if (uvjet_zemlja or uvjet_komet):
+        if (uvjet_zemlja and uvjet_komet):
+            #crtaj pravce i njihova sjecišta (radi vizualizacije i testiranja)
+            # x_zemlje = np.linspace(-10**15, 10**15)
+            # y_zemlje = a_zemlje*x_zemlje+b_zemlje
+            # x_kometa = np.linspace(-10**15, 10**15)
+            # y_kometa = a_kometa*x_kometa+b_kometa
+            # plt.plot(x_zemlje, y_zemlje, color = "blue")
+            # plt.plot(x_kometa, y_kometa, color="red")
+            # plt.scatter(x1_kometa, y1_kometa, color="red")
+            # plt.scatter(x1_zemlje, y1_zemlje, color="blue")
+            # plt.scatter(x2_kometa, y2_kometa, color="red")
+            # plt.scatter(x2_zemlje, y2_zemlje, color="blue")
+            # plt.scatter(x_collision, y_collision, color="yellow")
             return True
         else: 
             return False
