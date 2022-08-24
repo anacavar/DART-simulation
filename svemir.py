@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
 class Sustav():
     def __init__(self):
         self.tijela = []
@@ -76,9 +75,13 @@ class Sustav():
                 print("Zemlja je pogođena!")
                 break
       
-    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
+    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2.1*1.495978707*10**11):
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()  
+
+        #counter za točku iz koje lansiramo letjelicu
+        # i = 0
+
         # u svakom trenutku pomaknemo svaki planet za jedan korak                                       
         while self.time[-1]<t:
             for tijelo in self.tijela:
@@ -88,6 +91,8 @@ class Sustav():
             # ako je udaljenost asteroida veća od maksimalne prekini gibanje
             comet_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1]))
             if (comet_distance >= max_distance):
+                # i+=1
+                # if (i>=10):
                 break
 
     def getDistance(self, tijelo1, tijelo2):
@@ -175,6 +180,10 @@ class Sustav():
         if(tijelo == self.asteroid):
             zemlja = self.tijela[3]
             tijela.remove(zemlja)
+        # isključujemo gravitacijsko djelovanje za letjelicu
+        if (tijelo.id == "letjelica"):
+            return 0*tijelo.v[-1] # mislim da ovo trjabva biti vektor? i jest!
+        # računamo ukupnu akceleraciju na pojedini planet
         F_ukupna = np.array((0, 0))
         for tijelo_i in tijela:
             F_ukupna = np.add(F_ukupna, self.__gravitacija(tijelo, tijelo_i))
@@ -188,6 +197,26 @@ class Sustav():
         r = np.sqrt(np.dot(r12, r12))
         F = G*planet1.mass*planet2.mass/r**3 * r12 # vektor u smjeru planeta 2
         return F
+
+    def launch(self, letjelica, v0, N_do_trenutka_pogotka=1):
+        self.tijela.append(letjelica)
+
+        x1 = self.tijela[3].x[0] 
+        y1 = self.tijela[3].y[0]
+        
+        x2 = self.tijela[-2].x[-1] 
+        y2 = self.tijela[-2].y[-1] 
+        
+        letjelica.r.append(np.array((x1, y1)))
+        letjelica.x.append(x1)
+        letjelica.y.append(y1) 
+
+        v0_kut = np.arctan2(y2-y1, x2-x1)
+        
+        v_x0 = v0*np.cos(v0_kut)
+        v_y0 = v0*np.sin(v0_kut)
+
+        letjelica.v.append(np.array((v_x0, v_y0)))
 
     def resetSystem(self, i=0):
         for tijelo in self.tijela:
@@ -210,5 +239,3 @@ class Sustav():
     def clear(self):
         self.time = [0]
         self.tijela = []
-
-
