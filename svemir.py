@@ -25,7 +25,7 @@ class Sustav():
         r0_kut = np.arctan2(tijelo.y[i], tijelo.x[i])
         v0 = np.sqrt(np.dot(tijelo.v[i], tijelo.v[i]))
         v0_kut = np.arctan2(tijelo.v[i][1], tijelo.v[i][0])
-        return r0, r0_kut, v0, v0_kut  
+        return r0, r0_kut, v0, v0_kut
 
     def addPlanet(self, planet, r0, r0_kut, v0, v0_kut):
         self.tijela.append(planet)
@@ -60,29 +60,10 @@ class Sustav():
         self.asteroid.x.append(asteroid.r[-1][0])
         self.asteroid.y.append(asteroid.r[-1][1])
 
-    def evolve(self, dt=60*60*24, t = 2*60*60*24*365.25):
+    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()
         # u svakom trenutku pomaknemo svaki planet za jedan korak
-        while self.time[-1]<t:
-        # for i in range (500):
-            for tijelo in self.tijela:
-                tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
-                tijelo.move(dt)
-            self.time.append(self.time[-1]+dt)
-            # provjerimo je li došlo do sudara asteroida i planeta
-            if (self.__zemlja_pogodjena()):
-                print("Zemlja je pogođena!")
-                break
-      
-    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2.1*1.495978707*10**11):
-        # prije gibanja postavimo odnose gravitacijskih sila na tijela
-        self.__apply_gravity()  
-
-        #counter za točku iz koje lansiramo letjelicu
-        # i = 0
-
-        # u svakom trenutku pomaknemo svaki planet za jedan korak                                       
         while self.time[-1]<t:
             for tijelo in self.tijela:
                 tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
@@ -91,8 +72,20 @@ class Sustav():
             # ako je udaljenost asteroida veća od maksimalne prekini gibanje
             comet_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1]))
             if (comet_distance >= max_distance):
-                # i+=1
-                # if (i>=10):
+                break
+
+    def evolve(self, dt=60*60*24, t = 2*60*60*24*365.25):
+        # prije gibanja postavimo odnose gravitacijskih sila na tijela
+        self.__apply_gravity()
+        # u svakom trenutku pomaknemo svaki planet za jedan korak
+        while self.time[-1]<t:
+            for tijelo in self.tijela:
+                tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
+                tijelo.move(dt)
+            self.time.append(self.time[-1]+dt)
+            # provjerimo je li došlo do sudara asteroida i planeta
+            if (self.__zemlja_pogodjena()):
+                print("Zemlja je pogođena!")
                 break
 
     def getDistance(self, tijelo1, tijelo2):
@@ -101,33 +94,30 @@ class Sustav():
 
     def __zemlja_pogodjena(self):
         # ova metoda provjerava sjeku li se putanje asteroida i Zemlje u zadanom vremenskom intervalu dt
-        zemlja = self.tijela[3]
-
+        for tijelo in self.tijela:
+            if (tijelo.id == "Zemlja"):
+                zemlja = tijelo
         # točke pravaca
         x1_zemlje = zemlja.x[-2]
         x2_zemlje = zemlja.x[-1]
         y1_zemlje = zemlja.y[-2]
         y2_zemlje = zemlja.y[-1]
-
         x1_asteroida = self.asteroid.x[-2]
         x2_asteroida = self.asteroid.x[-1]
         y1_asteroida = self.asteroid.y[-2]
         y2_asteroida = self.asteroid.y[-1]
-
         # pravac 1 (Zemlja)
         a_zemlje = (y2_zemlje-y1_zemlje)/(x2_zemlje-x1_zemlje)
         b_zemlje = -a_zemlje*x1_zemlje + y1_zemlje
         # pravac 2 (asteroida)
         a_asteroida = (y2_asteroida-y1_asteroida)/(x2_asteroida-x1_asteroida)
         b_asteroida = -a_asteroida*x1_asteroida + y1_asteroida
-
         # računamo koordinate sudara
         x_collision = (b_asteroida-b_zemlje)/(a_zemlje-a_asteroida)
         y_collision = a_zemlje*x_collision + b_zemlje
-
+        # provjeravamo uvjete da se dužine sjeku
         uvjet_zemlja = self.uvjet(x_collision, y_collision, x1_zemlje, x2_zemlje, y1_zemlje, y2_zemlje)
         uvjet_asteroid = self.uvjet(x_collision, y_collision, x1_asteroida, x2_asteroida, y1_asteroida, y2_asteroida)
-
         if (uvjet_zemlja and uvjet_asteroid):
             # crtaj pravce i njihova sjecišta (radi vizualizacije i testiranja)
             # x_zemlje = np.linspace(-10**15, 10**15)
@@ -142,7 +132,7 @@ class Sustav():
             # plt.scatter(x2_zemlje, y2_zemlje, color="blue")
             # plt.scatter(x_collision, y_collision, color="yellow")
             return True
-        else: 
+        else:
             return False
 
     def uvjet(self, x, y, x1, x2, y1, y2):
@@ -172,53 +162,59 @@ class Sustav():
         # predavanje inicijalnog impulsa Suncu
         self.__initial_impulse()
 
+
     def __gravitacija_na_tijelo(self, tijelo):
         # računa i vraća ukupnu akceleraciju na pojedini planet u međudjelovanju sa svim ostalim tijelima u sustavu
         tijela = [i for i in self.tijela]
+        # iz liste tijela koje gravitacijski djeluju na zadani planet mičemo zadani planet i letjelicu
         tijela.remove(tijelo)
+        for body in tijela:
+            if (body.id == 'letjelica'):
+                tijela.remove(body)
         # isključujemo gravitacijsko međudjelovanje zemlje i asteroida
         if(tijelo == self.asteroid):
             zemlja = self.tijela[3]
             tijela.remove(zemlja)
         # isključujemo gravitacijsko djelovanje za letjelicu
         if (tijelo.id == "letjelica"):
-            return 0*tijelo.v[-1] # mislim da ovo trjabva biti vektor? i jest!
+            return 0*tijelo.v[-1]
         # računamo ukupnu akceleraciju na pojedini planet
         F_ukupna = np.array((0, 0))
         for tijelo_i in tijela:
-            F_ukupna = np.add(F_ukupna, self.__gravitacija(tijelo, tijelo_i))
+            F_ukupna = np.add(F_ukupna, self.__gravitacija(tijelo, tijelo_i)) #Tuu (neš se unutra dogodi kad krene evolucija pozitivna)
         a = F_ukupna/tijelo.mass
         return a
+
 
     def __gravitacija(self, planet1, planet2):
         # gravitacijska sila usmjerena od prvog planeta prema drugom
         G = 6.67*10**(-11) # newton-metre2-kilogram−2
         r12 = np.subtract(planet2.r[-1], planet1.r[-1])
+        # print(r12)
         r = np.sqrt(np.dot(r12, r12))
         F = G*planet1.mass*planet2.mass/r**3 * r12 # vektor u smjeru planeta 2
         return F
 
-    def launch(self, letjelica, v0, N_do_trenutka_pogotka=1):
+    def launch(self, letjelica, putanjaAsteroida, putanjaZemlje, v0, N_do_trenutka_pogotka=1):
         self.tijela.append(letjelica)
-
-        x1 = self.tijela[3].x[0] 
-        y1 = self.tijela[3].y[0]
-        
-        x2 = self.tijela[-2].x[-1] 
-        y2 = self.tijela[-2].y[-1] 
-        
+        # koordinate ispaljivanja letjelice (prva točka evolucije === zadnja (-1) točka reverse evolucije Zemlje)
+        x1 = putanjaZemlje[-1][0] + 1000000
+        y1 = putanjaZemlje[-1][1] + 1000000
+        # koordinate sudare letjelice i meteora (n-ta točka evolucije === -n-ta točka reverse evolucije asteroida)
+        x2 = putanjaAsteroida[-N_do_trenutka_pogotka][0]
+        y2 = putanjaAsteroida[-N_do_trenutka_pogotka][1]
+        # postavljanje početne pozicije letjelice
         letjelica.r.append(np.array((x1, y1)))
         letjelica.x.append(x1)
-        letjelica.y.append(y1) 
-
+        letjelica.y.append(y1)
+        # postavljanje početne brzine letjelice
         v0_kut = np.arctan2(y2-y1, x2-x1)
-        
         v_x0 = v0*np.cos(v0_kut)
         v_y0 = v0*np.sin(v0_kut)
-
         letjelica.v.append(np.array((v_x0, v_y0)))
 
     def resetSystem(self, i=0):
+        self.time = [0]
         for tijelo in self.tijela:
             r0 = tijelo.r[i]
             v0 = tijelo.v[i]

@@ -1,4 +1,3 @@
-from re import T
 from tijelo import Tijelo
 from svemir import Sustav
 import matplotlib.pyplot as plt
@@ -61,19 +60,18 @@ masaLetjelice = 610 #kg
 radijusLetjelice = 2 #m
 
 # planeti
-Sunce = Tijelo(masaSunca, radijusSunca)
-Merkur = Tijelo(masaMerkura, radijusMerkura)
-Venera = Tijelo(masaVenere, radijusVenere)
-Zemlja = Tijelo(masaZemlje, radijusZemlje)
-Mars = Tijelo(masaMarsa, radijusMarsa)
-
-Jupiter = Tijelo(masaJupitra, radijusJupitra)
-Saturn = Tijelo(masaSaturna, radijusSaturna)
-Uran = Tijelo(masaUrana, radijusUrana)
-Neptun = Tijelo(masaNeptuna, radijusNeptuna)
+Sunce = Tijelo(masaSunca, radijusSunca, "Sunce")
+Merkur = Tijelo(masaMerkura, radijusMerkura, "Merkur")
+Venera = Tijelo(masaVenere, radijusVenere, "Venera")
+Zemlja = Tijelo(masaZemlje, radijusZemlje, "Zemlja")
+Mars = Tijelo(masaMarsa, radijusMarsa, "Mars")
+Jupiter = Tijelo(masaJupitra, radijusJupitra, "Jupiter")
+Saturn = Tijelo(masaSaturna, radijusSaturna, "Saturn")
+Uran = Tijelo(masaUrana, radijusUrana, "Uran")
+Neptun = Tijelo(masaNeptuna, radijusNeptuna, "Neptun")
 
 # asteroid
-Asteroid = Tijelo(masaAsteroida, radijusAsteroida)
+Asteroid = Tijelo(masaAsteroida, radijusAsteroida, "asteroid")
 
 # dodajemo planete sa uvjetima u trenutku sudara asteroida sa Zemljom
 SuncevSustav.addPlanet(Sunce, 0, 0, 0, 90)
@@ -88,17 +86,16 @@ SuncevSustav.addPlanet(Neptun, udaljenostNeptuna, 0, brzinaNeptuna, 90)
 SuncevSustav.shootComet(Asteroid, udaljenostZemlje+radijusZemlje, 0, brzinaAsteroidaPriUdaru, kutBrzineAsteroidaPriUdaru)
 
 # letjelica
-Letjelica = Tijelo(masaLetjelice, radijusLetjelice)
-Letjelica.id = "letjelica"
+Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica")
 
 # reverse
 SuncevSustav.reverseEvolve()
 
-# SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-# N_do_trenutka_pogotka = 10 # je li tako?
-# SuncevSustav.launch(Letjelica, 60000, N_do_trenutka_pogotka)
-SuncevSustav.launch(Letjelica, 60000)
+putanjaAsteroida = Asteroid.r
+putanjaZemlje = Zemlja.r
 
+SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
+SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, v0=60000, N_do_trenutka_pogotka=10)
 SuncevSustav.evolve()
 
 fig = plt.figure()
@@ -106,7 +103,7 @@ plt.title('Graf')
 plt.axis('equal')
 plt.title("Sudar asteroida sa planetom")
 
-# SKICA
+# # SKICA
 # plt.xlim(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000)
 # plt.ylim(-10000000000, 10000000000)
 # plt.scatter(Sunce.x, Sunce.y, color="yellow", label="Sunce")
@@ -115,7 +112,7 @@ plt.title("Sudar asteroida sa planetom")
 # plt.scatter(Zemlja.x, Zemlja.y, color="blue", label="Zemlja")
 # plt.scatter(Mars.x, Mars.y, color="green", label="Mars")
 # plt.scatter(Asteroid.x, Asteroid.y, color="black", label="asteroid")        
-# plt.scatter(Letjelica.x, Letjelica.y, color="darkblue")
+# # plt.scatter(Letjelica.x, Letjelica.y, color="darkblue")
 
 # ANIMACIJA
 def animation_frame(i):
@@ -124,8 +121,6 @@ def animation_frame(i):
         plt.axis('equal')
         plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
         plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
-        # plt.xlim(-1000000000, 10000000000)
-        # plt.ylim(-10000000000, 10000000000)
         plt.plot(Sunce.x[:i], Sunce.y[:i], label = "Sunce", color = "yellow")
         plt.plot(Merkur.x[:i], Merkur.y[:i], label = "Merkur", color = "brown")
         plt.plot(Venera.x[:i], Venera.y[:i], label = "Venera", color = "orange")
@@ -147,7 +142,7 @@ def animation_frame(i):
         plt.scatter(Uran.x[i], Uran.y[i], color="lightslategrey")
         plt.scatter(Neptun.x[i], Neptun.y[i], color="darkslateblue")
         plt.scatter(Asteroid.x[i], Asteroid.y[i], color="black")
-        plt.scatter(Letjelica.x[i], Letjelica.y[i], color="darkblue")
+        plt.scatter(Letjelica.x[i], Letjelica.y[i], label = "letjelica", color = "darkblue", marker="^")
         plt.legend()
     except:
         plt.scatter(Sunce.x[-1], Sunce.y[-1], color="yellow")
@@ -160,7 +155,7 @@ def animation_frame(i):
         plt.scatter(Uran.x[-1], Uran.y[-1], color="lightslategrey")
         plt.scatter(Neptun.x[-1], Neptun.y[-1], color="darkslateblue")
         plt.scatter(Asteroid.x[-1], Asteroid.y[-1], color="black")
-        plt.scatter(Letjelica.x[-1], Letjelica.y[-1], color="darkblue")
+        plt.scatter(Letjelica.x[-1], Letjelica.y[-1], color="darkblue", marker="^")
         plt.legend()
         pass
 
