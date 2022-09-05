@@ -59,8 +59,30 @@ class Sustav():
         self.asteroid.v.append(np.array((v_x0, v_y0)))
         self.asteroid.x.append(asteroid.r[-1][0])
         self.asteroid.y.append(asteroid.r[-1][1])
+        
+    def launch(self, letjelica, putanjaAsteroida, putanjaZemlje, N_do_trenutka_pogotka=1):
+        # koordinate ispaljivanja letjelice (prva točka evolucije === zadnja (-1) točka reverse evolucije Zemlje)
+        x1 = putanjaZemlje[-1][0] + 1000000
+        y1 = putanjaZemlje[-1][1] + 1000000
+        # koordinate sudare letjelice i meteora (n-ta točka evolucije === -n-ta točka reverse evolucije asteroida)
+        x2 = putanjaAsteroida[-N_do_trenutka_pogotka][0]
+        y2 = putanjaAsteroida[-N_do_trenutka_pogotka][1]
+        # postavljanje početne pozicije letjelice
+        letjelica.r.append(np.array((x1, y1)))
+        letjelica.x.append(x1)
+        letjelica.y.append(y1)
+        self.tijela.append(letjelica)
+        # postavljanje početne brzine letjelice
+        t = N_do_trenutka_pogotka*self.dt
+        s = np.sqrt((x2-x1)**2+(y2-y1)**2)
+        v0 = s/t
+        v0_kut = np.arctan2(y2-y1, x2-x1)
+        v_x0 = v0*np.cos(v0_kut)
+        v_y0 = v0*np.sin(v0_kut)
+        letjelica.v.append(np.array((v_x0, v_y0)))
 
     def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
+        self.dt = dt
         # prije gibanja postavimo odnose gravitacijskih sila na tijela
         self.__apply_gravity()
         # u svakom trenutku pomaknemo svaki planet za jedan korak
@@ -87,55 +109,63 @@ class Sustav():
             if (self.__zemlja_pogodjena()):
                 print("Zemlja je pogođena!")
                 break
-
-    def getDistance(self, tijelo1, tijelo2):
-        udaljenost = np.sqrt((tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2)
-        return udaljenost
+            # # provjerimo je li došlo do sudara letjelice s asteroidom
+            if (self.__asteroid_pogodjen()):
+                print("Asteroid je pogođen")
 
     def __zemlja_pogodjena(self):
-        # ova metoda provjerava sjeku li se putanje asteroida i Zemlje u zadanom vremenskom intervalu dt
         for tijelo in self.tijela:
             if (tijelo.id == "Zemlja"):
                 zemlja = tijelo
+        return self.__sudar_tijela(zemlja, self.asteroid)
+
+    def __asteroid_pogodjen(self):
+        for tijelo in self.tijela:
+            if (tijelo.id == "letjelica"):
+                letjelica = tijelo
+        return self.__sudar_tijela(self.asteroid, letjelica)
+
+    def __sudar_tijela(self, tijelo1, tijelo2):
+        # ova metoda provjerava sjeku li se putanje dvaju tijela u zadanom vremenskom intervalu dt
         # točke pravaca
-        x1_zemlje = zemlja.x[-2]
-        x2_zemlje = zemlja.x[-1]
-        y1_zemlje = zemlja.y[-2]
-        y2_zemlje = zemlja.y[-1]
-        x1_asteroida = self.asteroid.x[-2]
-        x2_asteroida = self.asteroid.x[-1]
-        y1_asteroida = self.asteroid.y[-2]
-        y2_asteroida = self.asteroid.y[-1]
-        # pravac 1 (Zemlja)
-        a_zemlje = (y2_zemlje-y1_zemlje)/(x2_zemlje-x1_zemlje)
-        b_zemlje = -a_zemlje*x1_zemlje + y1_zemlje
-        # pravac 2 (asteroida)
-        a_asteroida = (y2_asteroida-y1_asteroida)/(x2_asteroida-x1_asteroida)
-        b_asteroida = -a_asteroida*x1_asteroida + y1_asteroida
+        x1_tijela1 = tijelo1.x[-2]
+        x2_tijela1 = tijelo1.x[-1]
+        y1_tijela1 = tijelo1.y[-2]
+        y2_tijela1 = tijelo1.y[-1]
+        x1_tijela2 = tijelo2.x[-2]
+        x2_tijela2 = tijelo2.x[-1]
+        y1_tijela2 = tijelo2.y[-2]
+        y2_tijela2 = tijelo2.y[-1]
+        # pravac 1 (tijelo1)
+        a_tijela1 = (y2_tijela1-y1_tijela1)/(x2_tijela1-x1_tijela1)
+        b_tijela1 = -a_tijela1*x1_tijela1 + y1_tijela1
+        # pravac 2 (tijelo2)
+        a_tijela2 = (y2_tijela2-y1_tijela2)/(x2_tijela2-x1_tijela2)
+        b_tijela2 = -a_tijela2*x1_tijela2 + y1_tijela2
         # računamo koordinate sudara
-        x_collision = (b_asteroida-b_zemlje)/(a_zemlje-a_asteroida)
-        y_collision = a_zemlje*x_collision + b_zemlje
+        x_collision = (b_tijela2-b_tijela1)/(a_tijela1-a_tijela2)
+        y_collision = a_tijela1*x_collision + b_tijela1
         # provjeravamo uvjete da se dužine sjeku
-        uvjet_zemlja = self.uvjet(x_collision, y_collision, x1_zemlje, x2_zemlje, y1_zemlje, y2_zemlje)
-        uvjet_asteroid = self.uvjet(x_collision, y_collision, x1_asteroida, x2_asteroida, y1_asteroida, y2_asteroida)
-        if (uvjet_zemlja and uvjet_asteroid):
+        uvjet_tijelo1 = self.__uvjet(x_collision, y_collision, x1_tijela1, x2_tijela1, y1_tijela1, y2_tijela1)
+        uvjet_tijelo2 = self.__uvjet(x_collision, y_collision, x1_tijela2, x2_tijela2, y1_tijela2, y2_tijela2)
+        if (uvjet_tijelo1 and uvjet_tijelo2):
             # crtaj pravce i njihova sjecišta (radi vizualizacije i testiranja)
-            # x_zemlje = np.linspace(-10**15, 10**15)
-            # y_zemlje = a_zemlje*x_zemlje+b_zemlje
-            # x_asteroida = np.linspace(-10**15, 10**15)
-            # y_asteroida = a_asteroida*x_asteroida+b_asteroida
-            # plt.plot(x_zemlje, y_zemlje, color = "blue")
-            # plt.plot(x_asteroida, y_asteroida, color="red")
-            # plt.scatter(x1_asteroida, y1_asteroida, color="red")
-            # plt.scatter(x1_zemlje, y1_zemlje, color="blue")
-            # plt.scatter(x2_asteroida, y2_asteroida, color="red")
-            # plt.scatter(x2_zemlje, y2_zemlje, color="blue")
+            # x_tijela1 = np.linspace(-10**15, 10**15)
+            # y_tijela1 = a_tijela1*x_tijela1+b_tijela2
+            # x_tijela2 = np.linspace(-10**15, 10**15)
+            # y_tijela2 = a_tijela2*x_tijela2+b_tijela2
+            # plt.plot(x_tijela1, y_tijela1, color = "blue")
+            # plt.plot(x_tijela2, y_tijela2, color="red")
+            # plt.scatter(x1_tijela2, y1_tijela2, color="red")
+            # plt.scatter(x1_tijela1, y1_tijela1, color="blue")
+            # plt.scatter(x2_tijela2, y2_tijela2, color="red")
+            # plt.scatter(x2_tijela1, y2_tijela1, color="blue")
             # plt.scatter(x_collision, y_collision, color="yellow")
             return True
         else:
             return False
 
-    def uvjet(self, x, y, x1, x2, y1, y2):
+    def __uvjet(self, x, y, x1, x2, y1, y2):
         # ova metoda provjerava nalazi li se sjecište (x, y) na dužini između točaka 1 i 2
         delta = 0 # radi testiranja
         if (x1 < x2):
@@ -162,7 +192,6 @@ class Sustav():
         # predavanje inicijalnog impulsa Suncu
         self.__initial_impulse()
 
-
     def __gravitacija_na_tijelo(self, tijelo):
         # računa i vraća ukupnu akceleraciju na pojedini planet u međudjelovanju sa svim ostalim tijelima u sustavu
         tijela = [i for i in self.tijela]
@@ -185,7 +214,6 @@ class Sustav():
         a = F_ukupna/tijelo.mass
         return a
 
-
     def __gravitacija(self, planet1, planet2):
         # gravitacijska sila usmjerena od prvog planeta prema drugom
         G = 6.67*10**(-11) # newton-metre2-kilogram−2
@@ -195,23 +223,6 @@ class Sustav():
         F = G*planet1.mass*planet2.mass/r**3 * r12 # vektor u smjeru planeta 2
         return F
 
-    def launch(self, letjelica, putanjaAsteroida, putanjaZemlje, v0, N_do_trenutka_pogotka=1):
-        self.tijela.append(letjelica)
-        # koordinate ispaljivanja letjelice (prva točka evolucije === zadnja (-1) točka reverse evolucije Zemlje)
-        x1 = putanjaZemlje[-1][0] + 1000000
-        y1 = putanjaZemlje[-1][1] + 1000000
-        # koordinate sudare letjelice i meteora (n-ta točka evolucije === -n-ta točka reverse evolucije asteroida)
-        x2 = putanjaAsteroida[-N_do_trenutka_pogotka][0]
-        y2 = putanjaAsteroida[-N_do_trenutka_pogotka][1]
-        # postavljanje početne pozicije letjelice
-        letjelica.r.append(np.array((x1, y1)))
-        letjelica.x.append(x1)
-        letjelica.y.append(y1)
-        # postavljanje početne brzine letjelice
-        v0_kut = np.arctan2(y2-y1, x2-x1)
-        v_x0 = v0*np.cos(v0_kut)
-        v_y0 = v0*np.sin(v0_kut)
-        letjelica.v.append(np.array((v_x0, v_y0)))
 
     def resetSystem(self, i=0):
         self.time = [0]

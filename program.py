@@ -95,7 +95,7 @@ putanjaAsteroida = Asteroid.r
 putanjaZemlje = Zemlja.r
 
 SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, v0=60000, N_do_trenutka_pogotka=10)
+SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_trenutka_pogotka=10)
 SuncevSustav.evolve()
 
 fig = plt.figure()
@@ -103,7 +103,7 @@ plt.title('Graf')
 plt.axis('equal')
 plt.title("Sudar asteroida sa planetom")
 
-# # SKICA
+# SKICA
 # plt.xlim(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000)
 # plt.ylim(-10000000000, 10000000000)
 # plt.scatter(Sunce.x, Sunce.y, color="yellow", label="Sunce")
@@ -112,7 +112,7 @@ plt.title("Sudar asteroida sa planetom")
 # plt.scatter(Zemlja.x, Zemlja.y, color="blue", label="Zemlja")
 # plt.scatter(Mars.x, Mars.y, color="green", label="Mars")
 # plt.scatter(Asteroid.x, Asteroid.y, color="black", label="asteroid")        
-# # plt.scatter(Letjelica.x, Letjelica.y, color="darkblue")
+# plt.scatter(Letjelica.x, Letjelica.y, color="darkblue")
 
 # ANIMACIJA
 def animation_frame(i):
@@ -163,3 +163,4 @@ animation = ani.FuncAnimation(fig, animation_frame, 2000, interval=1)
 plt.show()
 writer = ani.PillowWriter(fps=60)
 animation.save('./udar_asteroida.gif', writer='writer')
+
