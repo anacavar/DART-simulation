@@ -1,6 +1,6 @@
 import numpy as np
 class Tijelo():
-    def __init__(self, masa, radijus, id):
+    def __init__(self, masa, radijus, id, color):
         self.mass = masa
         self.rad = radijus
         self.r = []
@@ -9,6 +9,7 @@ class Tijelo():
         self.x = []
         self.y = []
         self.id = id
+        self.color = color
 
     def move(self, dt):
         self.v.append(np.add(self.v[-1], self.a[-1]*dt))

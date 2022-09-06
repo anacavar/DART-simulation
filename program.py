@@ -60,18 +60,18 @@ masaLetjelice = 610 #kg
 radijusLetjelice = 2 #m
 
 # planeti
-Sunce = Tijelo(masaSunca, radijusSunca, "Sunce")
-Merkur = Tijelo(masaMerkura, radijusMerkura, "Merkur")
-Venera = Tijelo(masaVenere, radijusVenere, "Venera")
-Zemlja = Tijelo(masaZemlje, radijusZemlje, "Zemlja")
-Mars = Tijelo(masaMarsa, radijusMarsa, "Mars")
-Jupiter = Tijelo(masaJupitra, radijusJupitra, "Jupiter")
-Saturn = Tijelo(masaSaturna, radijusSaturna, "Saturn")
-Uran = Tijelo(masaUrana, radijusUrana, "Uran")
-Neptun = Tijelo(masaNeptuna, radijusNeptuna, "Neptun")
+Sunce = Tijelo(masaSunca, radijusSunca, "Sunce", "yellow")
+Merkur = Tijelo(masaMerkura, radijusMerkura, "Merkur", "brown")
+Venera = Tijelo(masaVenere, radijusVenere, "Venera", "orange")
+Zemlja = Tijelo(masaZemlje, radijusZemlje, "Zemlja", "blue")
+Mars = Tijelo(masaMarsa, radijusMarsa, "Mars", "green")
+Jupiter = Tijelo(masaJupitra, radijusJupitra, "Jupiter", "pink")
+Saturn = Tijelo(masaSaturna, radijusSaturna, "Saturn", "purple")
+Uran = Tijelo(masaUrana, radijusUrana, "Uran", "lightslategrey")
+Neptun = Tijelo(masaNeptuna, radijusNeptuna, "Neptun", "darkslategrey")
 
 # asteroid
-Asteroid = Tijelo(masaAsteroida, radijusAsteroida, "asteroid")
+Asteroid = Tijelo(masaAsteroida, radijusAsteroida, "asteroid", "black")
 
 # dodajemo planete sa uvjetima u trenutku sudara asteroida sa Zemljom
 SuncevSustav.addPlanet(Sunce, 0, 0, 0, 90)
@@ -86,7 +86,10 @@ SuncevSustav.addPlanet(Neptun, udaljenostNeptuna, 0, brzinaNeptuna, 90)
 SuncevSustav.shootComet(Asteroid, udaljenostZemlje+radijusZemlje, 0, brzinaAsteroidaPriUdaru, kutBrzineAsteroidaPriUdaru)
 
 # letjelica
-Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica")
+Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica", "darkblue")
+
+# prije gibanja postavimo odnose gravitacijskih sila na tijela
+SuncevSustav.applyGravity()
 
 # reverse
 SuncevSustav.reverseEvolve()
@@ -98,21 +101,12 @@ SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi d
 SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_trenutka_pogotka=10)
 SuncevSustav.evolve()
 
+# SuncevSustav.skiciraj(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000, -10000000000, 10000000000)
+
 fig = plt.figure()
 plt.title('Graf')
 plt.axis('equal')
 plt.title("Sudar asteroida sa planetom")
-
-# SKICA
-# plt.xlim(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000)
-# plt.ylim(-10000000000, 10000000000)
-# plt.scatter(Sunce.x, Sunce.y, color="yellow", label="Sunce")
-# plt.scatter(Merkur.x, Merkur.y, color="brown", label="Merkur")
-# plt.scatter(Venera.x, Venera.y, color="orange", label="Venera")
-# plt.scatter(Zemlja.x, Zemlja.y, color="blue", label="Zemlja")
-# plt.scatter(Mars.x, Mars.y, color="green", label="Mars")
-# plt.scatter(Asteroid.x, Asteroid.y, color="black", label="asteroid")        
-# plt.scatter(Letjelica.x, Letjelica.y, color="darkblue")
 
 # ANIMACIJA
 def animation_frame(i):
@@ -160,7 +154,6 @@ def animation_frame(i):
         pass
 
 animation = ani.FuncAnimation(fig, animation_frame, 2000, interval=1)
+# writer = ani.PillowWriter(fps=60)
+# animation.save('animation.gif', writer='writer')
 plt.show()
-writer = ani.PillowWriter(fps=60)
-animation.save('./udar_asteroida.gif', writer='writer')
-
