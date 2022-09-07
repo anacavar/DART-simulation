@@ -98,19 +98,8 @@ SuncevSustav.reverseEvolve()
 putanjaAsteroida = Asteroid.r
 putanjaZemlje = Zemlja.r
 SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_pogotka=10)
+SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=0, N_do_pogotka=80)
 SuncevSustav.evolve()
-
-# 1. treba mi način za odabrat delay letjelice - u kojem će trenutku krenuti 
-# - možda dati launchu kao dvije koordinate - startnu i posljednju (u obliku vremenskog parametra N)
-# i onda unutar evolve metode u odgovarajućem trenutku triggerati launch?
-
-
-
-
-
-
-
 
 # SuncevSustav.skiciraj(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000, -10000000000, 10000000000)
 SuncevSustav.animiraj(-2*udaljenostZemlje, 2*udaljenostZemlje, -2*udaljenostZemlje, 2*udaljenostZemlje)
