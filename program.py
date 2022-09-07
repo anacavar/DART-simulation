@@ -2,7 +2,7 @@ from tijelo import Tijelo
 from svemir import Sustav
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
-import numpy as np
+# import numpy as np
 
 SuncevSustav = Sustav()
 
@@ -55,6 +55,8 @@ radijusAsteroida = 390 #m
 udaljenostAsteroida = 4*udaljenostZemlje # a.u.
 brzinaAsteroidaPriUdaru = 5.8*10**4 #m/s
 kutBrzineAsteroidaPriUdaru = 310 # stupnjeva
+# kutBrzineAsteroidaPriUdaru = 270 # stupnjeva --
+# kutBrzineAsteroidaPriUdaru = 200 # stupnjeva ++
 
 masaLetjelice = 610 #kg
 radijusLetjelice = 2 #m
@@ -91,69 +93,25 @@ Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica", "darkblue")
 # prije gibanja postavimo odnose gravitacijskih sila na tijela
 SuncevSustav.applyGravity()
 
-# reverse
+# negativna, pa pozitivna evolucija
 SuncevSustav.reverseEvolve()
-
 putanjaAsteroida = Asteroid.r
 putanjaZemlje = Zemlja.r
-
 SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_trenutka_pogotka=10)
+SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_pogotka=10)
 SuncevSustav.evolve()
 
+# 1. treba mi način za odabrat delay letjelice - u kojem će trenutku krenuti 
+# - možda dati launchu kao dvije koordinate - startnu i posljednju (u obliku vremenskog parametra N)
+# i onda unutar evolve metode u odgovarajućem trenutku triggerati launch?
+
+
+
+
+
+
+
+
 # SuncevSustav.skiciraj(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000, -10000000000, 10000000000)
+SuncevSustav.animiraj(-2*udaljenostZemlje, 2*udaljenostZemlje, -2*udaljenostZemlje, 2*udaljenostZemlje)
 
-fig = plt.figure()
-plt.title('Graf')
-plt.axis('equal')
-plt.title("Sudar asteroida sa planetom")
-
-# ANIMACIJA
-def animation_frame(i):
-    try:
-        plt.clf()
-        plt.axis('equal')
-        plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
-        plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
-        plt.plot(Sunce.x[:i], Sunce.y[:i], label = "Sunce", color = "yellow")
-        plt.plot(Merkur.x[:i], Merkur.y[:i], label = "Merkur", color = "brown")
-        plt.plot(Venera.x[:i], Venera.y[:i], label = "Venera", color = "orange")
-        plt.plot(Zemlja.x[:i], Zemlja.y[:i], label = "Zemlja", color = "blue")
-        plt.plot(Mars.x[:i], Mars.y[:i], label = "Mars", color = "green")
-        plt.plot(Jupiter.x[:i], Jupiter.y[:i], label = "Jupiter", color = "pink")
-        plt.plot(Saturn.x[:i], Saturn.y[:i], label = "Saturn", color = "purple")
-        plt.plot(Uran.x[:i], Uran.y[:i], label = "Uran", color = "lightslategrey")
-        plt.plot(Neptun.x[:i], Neptun.y[:i], label = "Neptun", color = "darkslateblue")
-        plt.plot(Asteroid.x[:i], Asteroid.y[:i], label = "asteroid", color = "black")
-        plt.plot(Letjelica.x[:i], Letjelica.y[:i], label = "letjelica", color = "darkblue")
-        plt.scatter(Sunce.x[i], Sunce.y[i], color="yellow")
-        plt.scatter(Merkur.x[i], Merkur.y[i], color="brown")
-        plt.scatter(Venera.x[i], Venera.y[i], color="orange")
-        plt.scatter(Zemlja.x[i], Zemlja.y[i], color="blue")
-        plt.scatter(Mars.x[i], Mars.y[i], color="green")
-        plt.scatter(Jupiter.x[i], Jupiter.y[i], color="pink")
-        plt.scatter(Saturn.x[i], Saturn.y[i], color="purple")
-        plt.scatter(Uran.x[i], Uran.y[i], color="lightslategrey")
-        plt.scatter(Neptun.x[i], Neptun.y[i], color="darkslateblue")
-        plt.scatter(Asteroid.x[i], Asteroid.y[i], color="black")
-        plt.scatter(Letjelica.x[i], Letjelica.y[i], label = "letjelica", color = "darkblue", marker="^")
-        plt.legend()
-    except:
-        plt.scatter(Sunce.x[-1], Sunce.y[-1], color="yellow")
-        plt.scatter(Merkur.x[-1], Merkur.y[-1], color="brown")
-        plt.scatter(Venera.x[-1], Venera.y[-1], color="orange")
-        plt.scatter(Zemlja.x[-1], Zemlja.y[-1], color="blue")
-        plt.scatter(Mars.x[-1], Mars.y[-1], color="green")
-        plt.scatter(Jupiter.x[-1], Jupiter.y[-1], color="pink")
-        plt.scatter(Saturn.x[-1], Saturn.y[-1], color="purple")
-        plt.scatter(Uran.x[-1], Uran.y[-1], color="lightslategrey")
-        plt.scatter(Neptun.x[-1], Neptun.y[-1], color="darkslateblue")
-        plt.scatter(Asteroid.x[-1], Asteroid.y[-1], color="black")
-        plt.scatter(Letjelica.x[-1], Letjelica.y[-1], color="darkblue", marker="^")
-        plt.legend()
-        pass
-
-animation = ani.FuncAnimation(fig, animation_frame, 2000, interval=1)
-# writer = ani.PillowWriter(fps=60)
-# animation.save('animation.gif', writer='writer')
-plt.show()
