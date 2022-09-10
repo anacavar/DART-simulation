@@ -8,6 +8,8 @@ class Sustav():
         self.time = [0]
         self.x_pogotka_letjelice = None
         self.y_pogotka_letjelice = None
+        self.N_do_lansiranja = 0
+        self.letjelica_stop = False
 
     def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
         self.dt = dt
@@ -30,7 +32,7 @@ class Sustav():
         for i in range(self.N_koraka):
             for tijelo in self.tijela:
                 if(tijelo.id == "letjelica"):
-                    if(len(self.time)-1>=self.N_do_lansiranja): # letjelica lansirana
+                    if(len(self.time)-1>=self.N_do_lansiranja and self.letjelica_stop == False): # letjelica lansirana
                         tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
                         tijelo.move(dt)
                 else:
@@ -44,12 +46,13 @@ class Sustav():
                 break
             # provjerimo je li došlo do sudara letjelice s asteroidom (ali samo ako postoji letjelica i ako je lansirana)
             if(self.tijela[-1].id == "letjelica"):
-                if(len(self.time)-1>=self.N_do_lansiranja): # provjera samo ako je letjelica lansirana
+                if(len(self.time)-1>=self.N_do_lansiranja): # provjera samo ako je letjelica lansirana 
                     if(len(self.tijela[-1].r)>=2):
                         if (self.__asteroid_pogodjen()):
-                            print("Asteroid je pogođen")
-                            # perfect inelastic collision applied
-                            # self.__inelastic_collision(self.letjelica, self.asteroid)
+                            if (self.letjelica_stop == False): # ako letjelica nije već udarila komet
+                                print("Asteroid je pogođen")
+                                # perfect inelastic collision applied
+                                self.__inelastic_collision(self.letjelica, self.asteroid)
 
     def __inelastic_collision(self, tijelo1, tijelo2):
         m1 = tijelo1.mass
@@ -61,6 +64,8 @@ class Sustav():
         self.asteroid.v.pop()
         self.asteroid.v.append(v_ukupno)
         # print(self.asteroid.v[-1])
+        self.letjelica_stop = True
+        self.N_konačni_letjelice = self.time[-1]/self.dt
         return v_ukupno
 
     def __initial_impulse(self):
@@ -114,15 +119,14 @@ class Sustav():
         self.asteroid.y.append(asteroid.r[-1][1])
         
     def launch(self, letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=0,  N_do_pogotka=0):
+        self.letjelica_stop = False
         self.N_do_lansiranja = N_do_lansiranja
-        # koordinate ispaljivanja letjelice (prva točka evolucije === zadnja (-1) točka reverse evolucije Zemlje)
+        # koordinate ispaljivanja letjelice
         x1 = putanjaZemlje[N_do_lansiranja][0] +1000000
         y1 = putanjaZemlje[N_do_lansiranja][1] +1000000
-
-        # koordinate sudare letjelice i meteora (n-ta točka evolucije === -n-ta točka reverse evolucije asteroida)
+        # koordinate sudare letjelice i meteora
         x2 = putanjaAsteroida[N_do_pogotka][0]
         y2 = putanjaAsteroida[N_do_pogotka][1]
-
         # postavljanje liste pozicija letjelice prije lansiranja
         lista = putanjaZemlje[:N_do_lansiranja+1]
         lista_r = []
@@ -136,7 +140,6 @@ class Sustav():
         letjelica.r = lista_r
         letjelica.x = lista_x
         letjelica.y = lista_y
-        self.tijela.append(letjelica)
         # postavljanje početne brzine letjelice s obzirom na koordinate i udaljenost
         t = (N_do_pogotka-N_do_lansiranja)*self.dt
         s = np.sqrt((x2-x1)**2+(y2-y1)**2)
@@ -184,8 +187,8 @@ class Sustav():
         uvjet_tijelo2 = self.__uvjet(x_collision, y_collision, x1_tijela2, x2_tijela2, y1_tijela2, y2_tijela2, tijelo1.rad, tijelo2.rad)
         if (uvjet_tijelo1 and uvjet_tijelo2):
             if(tijelo1.id=="letjelica" or tijelo2.id=="letjelica"):
-                self.x_pogotka_letjelice = x_collision#self.asteroid.x[-1]
-                self.y_pogotka_letjelice = y_collision#self.asteroid.y[-1]
+                self.x_pogotka_letjelice = x_collision
+                self.y_pogotka_letjelice = y_collision
             return True
         else:
             return False
@@ -209,13 +212,6 @@ class Sustav():
                     return True
         else:
             return False
-
-    def __apply_gravity(self):
-        # uspostavljanje međudjelovanja planeta prije početka gibanja
-        for tijelo in self.tijela:
-            tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
-        # predavanje inicijalnog impulsa Suncu
-        self.__initial_impulse()
 
     def applyGravity(self):
         # uspostavljanje međudjelovanja planeta prije početka gibanja
