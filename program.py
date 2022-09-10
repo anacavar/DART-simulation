@@ -1,8 +1,10 @@
 from tijelo import Tijelo
 from svemir import Sustav
 import matplotlib.pyplot as plt
-import matplotlib.animation as ani
-# import numpy as np
+import numpy as np
+
+np.seterr(all='raise')
+
 
 SuncevSustav = Sustav()
 
@@ -97,10 +99,34 @@ SuncevSustav.applyGravity()
 SuncevSustav.reverseEvolve()
 putanjaAsteroida = Asteroid.r
 putanjaZemlje = Zemlja.r
+
+putanjaAsteroida = []
+putanjaZemlje = []
+
+for r in Asteroid.r:
+  putanjaAsteroida.append(r)
+  
+for r in Zemlja.r:
+  putanjaZemlje.append(r)
+
+putanjaAsteroida.reverse()
+putanjaZemlje.reverse()
+
+vrijeme = SuncevSustav.time
 SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=0, N_do_pogotka=80)
-SuncevSustav.evolve()
 
-# SuncevSustav.skiciraj(udaljenostZemlje-10000000000, udaljenostZemlje+10000000000, -10000000000, 10000000000)
-SuncevSustav.animiraj(-2*udaljenostZemlje, 2*udaljenostZemlje, -2*udaljenostZemlje, 2*udaljenostZemlje)
+fig = plt.figure()
+plt.title('Graf')
+plt.axis('equal')
+plt.title("Sudar asteroida sa planetom")
+plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
 
+for i in range(20):
+  SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=i, N_do_pogotka=50)
+  SuncevSustav.evolve()
+  SuncevSustav.skiciraj()
+  # SuncevSustav.animiraj()
+  SuncevSustav.resetSystem() # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
+
+plt.show()

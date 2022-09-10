@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
+
 class Sustav():
     def __init__(self):
         self.tijela = []
         self.time = [0]
+        self.x_pogotka_letjelice = None
+        self.y_pogotka_letjelice = None
 
     def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
         self.dt = dt
@@ -18,21 +21,18 @@ class Sustav():
             # ako je udaljenost asteroida veća od maksimalne prekini gibanje
             comet_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1]))
             if (comet_distance >= max_distance):
+                self.N_koraka = len(self.time)-1
                 break
 
     def evolve(self, dt=60*60*24, t = 2*60*60*24*365.25):
         # u svakom trenutku pomaknemo svaki planet za jedan korak
-        while self.time[-1]<t:
+        # while self.time[-1]<t:
+        for i in range(self.N_koraka):
             for tijelo in self.tijela:
                 if(tijelo.id == "letjelica"):
-                    if(len(self.time)-1<self.N_do_lansiranja): # letjelica još nije lansirana
+                    if(len(self.time)-1>=self.N_do_lansiranja): # letjelica lansirana
                         tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
-                        tijelo.v.append(tijelo.v[-1])
-                        tijelo.r.append(self.Zemlja.r[-1])
-                        tijelo.x.append(self.Zemlja.x[-1])
-                        tijelo.y.append(self.Zemlja.y[-1])
-                    elif(len(self.time)-1>=self.N_do_lansiranja): # letjelica lansirana
-                        self.__move_RungeKutta(tijelo,dt)
+                        tijelo.move(dt)
                 else:
                     tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
                     # tijelo.move(dt) # Eulerova metoda
@@ -44,23 +44,23 @@ class Sustav():
                 break
             # provjerimo je li došlo do sudara letjelice s asteroidom (ali samo ako postoji letjelica i ako je lansirana)
             if(self.tijela[-1].id == "letjelica"):
-                # if(len(self.time)-1>=self.N_do_lansiranja):
-                if(len(self.tijela[-1].r)>=2):
-                    if (self.__asteroid_pogodjen()):
-                        print("Asteroid je pogođen")
-                        # perfect inelastic collision applied
-                        self.__inelastic_collision(self.letjelica, self.asteroid)
+                if(len(self.time)-1>=self.N_do_lansiranja): # provjera samo ako je letjelica lansirana
+                    if(len(self.tijela[-1].r)>=2):
+                        if (self.__asteroid_pogodjen()):
+                            print("Asteroid je pogođen")
+                            # perfect inelastic collision applied
+                            # self.__inelastic_collision(self.letjelica, self.asteroid)
 
     def __inelastic_collision(self, tijelo1, tijelo2):
-        m1 = tijelo1.mass #*10
+        m1 = tijelo1.mass
         m2 = tijelo2.mass
-        v1 = tijelo1.v[-1] #*10000
+        v1 = tijelo1.v[-1]
         v2 = tijelo2.v[-1]
         v_ukupno = np.add(m1*v1, m2*v2)/(m1+m2)
-        print(self.asteroid.v[-1])
+        # print(self.asteroid.v[-1])
         self.asteroid.v.pop()
         self.asteroid.v.append(v_ukupno)
-        print(self.asteroid.v[-1])
+        # print(self.asteroid.v[-1])
         return v_ukupno
 
     def __initial_impulse(self):
@@ -89,7 +89,7 @@ class Sustav():
         x0 = r0*np.cos(r0_kut)
         y0 = r0*np.sin(r0_kut)
         v_x0 = v0*np.cos(v0_kut)
-        v_y0 = v0*np.sin(v0_kut)
+        v_y0 = v0*np.sin(v0_kut) 
         # appendanje početnih vektora
         planet.r.append(np.array((x0, y0)))
         planet.v.append(np.array((v_x0, v_y0)))
@@ -114,21 +114,28 @@ class Sustav():
         self.asteroid.y.append(asteroid.r[-1][1])
         
     def launch(self, letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=0,  N_do_pogotka=0):
-
-        # ovo treba zamijeniti s N do trenutka lansiranja
-        # I JOŠ DODAJ OFFSET UNUTAR EVOLVE
         self.N_do_lansiranja = N_do_lansiranja
-
         # koordinate ispaljivanja letjelice (prva točka evolucije === zadnja (-1) točka reverse evolucije Zemlje)
-        x1 = putanjaZemlje[-N_do_lansiranja-1][0] + 1000000
-        y1 = putanjaZemlje[-N_do_lansiranja-1][1] + 1000000
+        x1 = putanjaZemlje[N_do_lansiranja][0] +1000000
+        y1 = putanjaZemlje[N_do_lansiranja][1] +1000000
+
         # koordinate sudare letjelice i meteora (n-ta točka evolucije === -n-ta točka reverse evolucije asteroida)
-        x2 = putanjaAsteroida[-N_do_pogotka-1][0]
-        y2 = putanjaAsteroida[-N_do_pogotka-1][1]
-        # postavljanje početne pozicije letjelice
-        letjelica.r.append(np.array((x1, y1)))
-        letjelica.x.append(x1)
-        letjelica.y.append(y1)
+        x2 = putanjaAsteroida[N_do_pogotka][0]
+        y2 = putanjaAsteroida[N_do_pogotka][1]
+
+        # postavljanje liste pozicija letjelice prije lansiranja
+        lista = putanjaZemlje[:N_do_lansiranja+1]
+        lista_r = []
+        lista_x = []
+        lista_y = []
+        for r in lista:
+            lista_r.append(np.array((r[0]+1000000, r[1]+1000000)))
+            lista_x.append(r[0]+1000000)
+            lista_y.append(r[1]+1000000)
+
+        letjelica.r = lista_r
+        letjelica.x = lista_x
+        letjelica.y = lista_y
         self.tijela.append(letjelica)
         # postavljanje početne brzine letjelice s obzirom na koordinate i udaljenost
         t = (N_do_pogotka-N_do_lansiranja)*self.dt
@@ -176,15 +183,16 @@ class Sustav():
         uvjet_tijelo1 = self.__uvjet(x_collision, y_collision, x1_tijela1, x2_tijela1, y1_tijela1, y2_tijela1, tijelo1.rad, tijelo2.rad)
         uvjet_tijelo2 = self.__uvjet(x_collision, y_collision, x1_tijela2, x2_tijela2, y1_tijela2, y2_tijela2, tijelo1.rad, tijelo2.rad)
         if (uvjet_tijelo1 and uvjet_tijelo2):
+            if(tijelo1.id=="letjelica" or tijelo2.id=="letjelica"):
+                self.x_pogotka_letjelice = x_collision#self.asteroid.x[-1]
+                self.y_pogotka_letjelice = y_collision#self.asteroid.y[-1]
             return True
         else:
             return False
 
     def __uvjet(self, x, y, x1, x2, y1, y2, r1, r2):
         # ova metoda provjerava nalazi li se sjecište (x, y) na dužini između točaka 1 i 2
-        # delta = 6.371 * 10**6 # radi testiranja (za 100 000 000 radi)
-        # IDEJA - MOŽDA JEDNOSTAVNO TU U DELTU STAVITI RADIJUS 1 + RADIJUS 2?
-        delta = 2*(r1+r2)
+        delta = (r1+r2)
         if (x1 < x2):
             if (y1 < y2):
                 if ((x1 - delta<=x<=x2 + delta) and (y1 -delta<=y<=y2+delta)):
@@ -297,41 +305,64 @@ class Sustav():
         return a
 
     def resetSystem(self, i=0):
+        self.time.clear()
+        self.time.append(0)
+        for tijelo in self.tijela:
+            if (tijelo.id=="letjelica"):
+                tijelo.r = []
+                tijelo.v = []
+                tijelo.a = []
+                tijelo.x = []
+                tijelo.y = []
+            else:
+                r0 = tijelo.r[i]
+                v0 = tijelo.v[i]
+                a0 = tijelo.a[i]
+                x0 = tijelo.x[i]
+                y0 = tijelo.y[i]
+                tijelo.r = []
+                tijelo.v = []
+                tijelo.a = []
+                tijelo.x = []
+                tijelo.y = []
+                tijelo.r.append(r0)
+                tijelo.v.append(v0)
+                tijelo.a.append(a0)
+                tijelo.x.append(x0)
+                tijelo.y.append(y0)
+
+    def clearLists(self):
         self.time = [0]
         for tijelo in self.tijela:
-            r0 = tijelo.r[i]
-            v0 = tijelo.v[i]
-            a0 = tijelo.a[i]
-            x0 = tijelo.x[i]
-            y0 = tijelo.y[i]
             tijelo.r = []
             tijelo.v = []
             tijelo.a = []
             tijelo.x = []
             tijelo.y = []
-            tijelo.r.append(r0)
-            tijelo.v.append(v0)
-            tijelo.a.append(a0)
-            tijelo.x.append(x0)
-            tijelo.y.append(y0)
-
+    
     def clear(self):
         self.time = [0]
         self.tijela = []
 
     def skiciraj(self, x1=-2*1.495978707*10**11, x2=2*1.495978707*10**11, y1=-2*1.495978707*10**11, y2=2*1.495978707*10**11):
-        fig = plt.figure()
-        plt.title('Graf')
-        plt.axis('equal')
-        plt.title("Sudar asteroida sa planetom")
-        plt.xlim(x1, x2)
-        plt.ylim(y1, y2)
+        # fig = plt.figure()
+        # plt.title('Graf')
+        # plt.axis('equal')
+        # plt.title("Sudar asteroida sa planetom")
+        # plt.xlim(x1, x2)
+        # plt.ylim(y1, y2)
         for tijelo in self.tijela:
-            plt.scatter(tijelo.x, tijelo.y, color=tijelo.color, label=tijelo.id)
-        self.__skiciraj_uvjet()
-        plt.show()
+            if (tijelo.id == "letjelica"):
+                plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                plt.scatter(tijelo.x[-1], tijelo.y[-1], color = tijelo.color, marker='*')
+            else:
+                plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = tijelo.color)
+                plt.scatter(tijelo.x[-1], tijelo.y[-1], color=tijelo.color, label=tijelo.id)
+        if(self.x_pogotka_letjelice!=None and self.y_pogotka_letjelice!=None):
+            plt.scatter(self.x_pogotka_letjelice, self.y_pogotka_letjelice, color="red", marker="X")
+        # plt.show()
 
-    def animiraj(self, x1, x2, y1, y2):
+    def animiraj(self, x1=-2*1.496*10**11, x2=2*1.496*10**11, y1=-2*1.496*10**11, y2=2*1.496*10**11):
         self.xlim1 = x1
         self.xlim2 = x2
         self.ylim1 = y1
@@ -350,14 +381,16 @@ class Sustav():
         plt.ylim(self.ylim1, self.ylim2)
         for tijelo in self.tijela:
             if (tijelo.id == "letjelica"):
-                if(i>=self.N_do_lansiranja):
-                    plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color, linestyle='dotted')
-                    plt.scatter(tijelo.x[i], tijelo.y[i], color = tijelo.color, marker='*')
+                plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                plt.scatter(tijelo.x[i], tijelo.y[i], color = tijelo.color, marker='*')
             else:
                 plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color)
                 plt.scatter(tijelo.x[i], tijelo.y[i], color = tijelo.color)
         plt.legend()
-
+        
+    def getDistance(self, tijelo1, tijelo2):
+        udaljenost = np.sqrt((tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2)
+        return udaljenost
 
 
 
