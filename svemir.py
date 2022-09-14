@@ -10,8 +10,10 @@ class Sustav():
         self.y_pogotka_letjelice = None
         self.N_do_lansiranja = 0
         self.letjelica_stop = False
+        self.ZemljaPogodjenaBoolean = False
+        self.min_udaljenost = []
 
-    def reverseEvolve(self, dt=60*60*24, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
+    def reverseEvolve(self, dt=60*60, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
         self.dt = dt
         # u svakom trenutku pomaknemo svaki planet za jedan korak
         while self.time[-1]<t:
@@ -21,14 +23,16 @@ class Sustav():
                 self.__move_RungeKutta(tijelo, -dt) # Runge Kutta metoda
             self.time.append(self.time[-1]+dt)
             # ako je udaljenost asteroida veća od maksimalne prekini gibanje
-            comet_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1]))
-            if (comet_distance >= max_distance):
+            # asteroid_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1])) #absolute distance from the Sun
+            asteroid_distance = self.asteroid.getTravelledDistance() # travelled distance
+            if (asteroid_distance >= max_distance):
+                # print(f"prijeđena udaljenost je: {self.asteroid.getTravelledDistance()/(1.496*10**11)}")
                 self.N_koraka = len(self.time)-1
                 break
 
-    def evolve(self, dt=60*60*24, t = 2*60*60*24*365.25):
+    def evolve(self, dt=60*60, t = 2*60*60*24*365.25):
+        self.ZemljaPogodjenaBoolean = False
         # u svakom trenutku pomaknemo svaki planet za jedan korak
-        # while self.time[-1]<t:
         for i in range(self.N_koraka):
             for tijelo in self.tijela:
                 if(tijelo.id == "letjelica"):
@@ -41,18 +45,19 @@ class Sustav():
                     self.__move_RungeKutta(tijelo, dt) # Runge Kutta metoda
             self.time.append(self.time[-1]+dt)
             # provjerimo je li došlo do sudara asteroida i planeta
-            if (self.__zemlja_pogodjena()):
-                print("Zemlja je pogođena!")
+            # self.__zemlja_pogodjena()
+            if (self.getDistance2(self.Zemlja.r[-1], self.asteroid.r[-1])<self.Zemlja.rad+self.asteroid.rad):
+                print("Zemlja je pogođena!") 
+                self.ZemljaPogodjenaBoolean = True
                 break
             # provjerimo je li došlo do sudara letjelice s asteroidom (ali samo ako postoji letjelica i ako je lansirana)
             if(self.tijela[-1].id == "letjelica"):
                 if(len(self.time)-1>=self.N_do_lansiranja): # provjera samo ako je letjelica lansirana 
                     if(len(self.tijela[-1].r)>=2):
-                        if (self.__asteroid_pogodjen()):
+                        if (self.__asteroid_pogodjen()): # je li letjelica pogodila asteroid
                             if (self.letjelica_stop == False): # ako letjelica nije već udarila komet
                                 print("Asteroid je pogođen")
-                                # perfect inelastic collision applied
-                                self.__inelastic_collision(self.letjelica, self.asteroid)
+                                self.__inelastic_collision(self.letjelica, self.asteroid) # perfect inelastic collision applied
 
     def __inelastic_collision(self, tijelo1, tijelo2):
         m1 = tijelo1.mass
@@ -148,6 +153,7 @@ class Sustav():
         v_x0 = v0*np.cos(v0_kut)
         v_y0 = v0*np.sin(v0_kut)
         letjelica.v.append(np.array((v_x0, v_y0)))
+        print(f"brzina letjelice je: {np.sqrt(v_x0**2+v_y0**2)}")
         self.letjelica = letjelica
 
     def __zemlja_pogodjena(self):
@@ -231,7 +237,6 @@ class Sustav():
         # isključujemo gravitacijsko međudjelovanje zemlje i asteroida
         if(tijelo == self.asteroid):
             zemlja = self.tijela[3]
-            tijela.remove(zemlja)
         # isključujemo gravitacijsko djelovanje za letjelicu
         if (tijelo.id == "letjelica"):
             return 0*tijelo.v[-1]
@@ -349,11 +354,14 @@ class Sustav():
         # plt.ylim(y1, y2)
         for tijelo in self.tijela:
             if (tijelo.id == "letjelica"):
-                plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                if(self.ZemljaPogodjenaBoolean):
+                    plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                else:
+                    plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = "red", linestyle='dotted')
                 plt.scatter(tijelo.x[-1], tijelo.y[-1], color = tijelo.color, marker='*')
             else:
                 plt.plot(tijelo.x, tijelo.y, label = tijelo.id, color = tijelo.color)
-                plt.scatter(tijelo.x[-1], tijelo.y[-1], color=tijelo.color, label=tijelo.id)
+                plt.scatter(tijelo.x[-1], tijelo.y[-1], color=tijelo.color)
         if(self.x_pogotka_letjelice!=None and self.y_pogotka_letjelice!=None):
             plt.scatter(self.x_pogotka_letjelice, self.y_pogotka_letjelice, color="red", marker="X")
         # plt.show()
@@ -377,7 +385,10 @@ class Sustav():
         plt.ylim(self.ylim1, self.ylim2)
         for tijelo in self.tijela:
             if (tijelo.id == "letjelica"):
-                plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                if(self.ZemljaPogodjenaBoolean):
+                    plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color, linestyle='dotted')
+                else:
+                    plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = "red", linestyle='dotted')
                 plt.scatter(tijelo.x[i], tijelo.y[i], color = tijelo.color, marker='*')
             else:
                 plt.plot(tijelo.x[:i], tijelo.y[:i], label = tijelo.id, color = tijelo.color)
@@ -388,6 +399,14 @@ class Sustav():
         udaljenost = np.sqrt((tijelo1.x[-1]-tijelo2.x[-1])**2+(tijelo1.y[-1]-tijelo2.y[-1])**2)
         return udaljenost
 
+    def getDistance2(self, r1, r2):
+        udaljenost = np.sqrt((r2[0]-r1[0])**2+(r2[1]-r1[1])**2)
+        return udaljenost
 
-
-
+    def getMinimumDistance(self, tijelo1, tijelo2):
+        min_value = self.getDistance2(tijelo1.r[0], tijelo2.r[0])
+        for i in range(len(self.time)):
+            value = self.getDistance2(tijelo1.r[i], tijelo2.r[i])
+            if (value<min_value):
+                min_value = value
+        return min_value

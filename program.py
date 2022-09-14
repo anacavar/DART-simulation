@@ -6,6 +6,9 @@ np.seterr(all='raise')
 
 SuncevSustav = Sustav()
 
+
+DT = 60*60*24/10 ####################################################################VARIJABLA KOJU MIJENJAMO
+
 # PODACI O PLANETIMA
 masaSunca = 1.989 * 10**30 #kg
 radijusSunca = 6.96340 * 10**8 #m
@@ -50,15 +53,16 @@ radijusNeptuna = 2.4622 * 10**7 #m
 udaljenostNeptuna = 4.4951*10**12 #m
 brzinaNeptuna = 5.4*10**3 #m/s
 
-masaAsteroida = 5.27*10**10 #kg
+masaAsteroida = 5.27*10**8 #kg
 radijusAsteroida = 390 #m
-udaljenostAsteroida = 4*udaljenostZemlje # a.u.
-brzinaAsteroidaPriUdaru = 5.8*10**4 #m/s
-kutBrzineAsteroidaPriUdaru = 310 # stupnjeva
-# kutBrzineAsteroidaPriUdaru = 270 # stupnjeva --
-# kutBrzineAsteroidaPriUdaru = 200 # stupnjeva ++
+udaljenostAsteroida = 6*udaljenostZemlje # a.u. ###################################################MIJENJAMO
+brzinaAsteroidaPriUdaru = 4*10**4 #5.8*10**4 #m/s #################################################VARIJABLA KOJU MIJENJAMO
+kutBrzineAsteroidaPriUdaru = 310 # stupnjeva ++ check
+# kutBrzineAsteroidaPriUdaru = 210 # stupnjeva ++ check
+# kutBrzineAsteroidaPriUdaru = 20 #10 # stupnjeva ++ check
+# kutBrzineAsteroidaPriUdaru = 110 # stupnjeva ++ check
 
-masaLetjelice = 610 #kg
+masaLetjelice = 610*5 #kg
 radijusLetjelice = 2 #m
 
 # planeti
@@ -85,7 +89,7 @@ SuncevSustav.addPlanet(Jupiter, udaljenostJupitra, 0, brzinaJupitra, 90)
 SuncevSustav.addPlanet(Saturn, udaljenostSaturna, 0, brzinaSaturna, 90)
 SuncevSustav.addPlanet(Uran, udaljenostUrana, 0, brzinaUrana, 90)
 SuncevSustav.addPlanet(Neptun, udaljenostNeptuna, 0, brzinaNeptuna, 90)
-SuncevSustav.shootComet(Asteroid, udaljenostZemlje+radijusZemlje, 0, brzinaAsteroidaPriUdaru, kutBrzineAsteroidaPriUdaru)
+SuncevSustav.shootComet(Asteroid, udaljenostZemlje+5*radijusZemlje/10, 0, brzinaAsteroidaPriUdaru, kutBrzineAsteroidaPriUdaru)
 
 # letjelica
 Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica", "darkblue")
@@ -94,12 +98,38 @@ Letjelica = Tijelo(masaLetjelice, radijusLetjelice, "letjelica", "darkblue")
 SuncevSustav.applyGravity()
 
 # negativna, pa pozitivna evolucija
-SuncevSustav.reverseEvolve()
+SuncevSustav.reverseEvolve(dt=DT, max_distance=udaljenostAsteroida)
 putanjaAsteroida = Asteroid.r
 putanjaZemlje = Zemlja.r
 
 SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-SuncevSustav.evolve()
+SuncevSustav.evolve(dt=DT)
+
+# Jednostavna evolucija
+
+# SuncevSustav.reverseEvolve(dt=DT, max_distance=udaljenostAsteroida)
+# SuncevSustav.resetSystem(-1) # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
+# SuncevSustav.evolve(dt=DT)
+# # SuncevSustav.resetSystem()
+# # SuncevSustav.launch()
+# # SuncevSustav.evolve(dt = DT)
+
+# fig = plt.figure()
+# plt.title('Graf')
+# plt.axis('equal')
+# plt.title("Sudar asteroida sa planetom")
+# plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+# plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+# plt.xlabel("x/m")
+# plt.ylabel("y/m")
+# SuncevSustav.skiciraj()
+# # plt.savefig('skica1.png')
+# plt.show()
+
+# min = SuncevSustav.getMinimumDistance(Zemlja, Asteroid)
+# print(min/radijusZemlje)
+
+# print(SuncevSustav.getDistance2(Zemlja.r[-1], Asteroid.r[-1])/radijusZemlje)
 
 # uzmi putanje Zemlje i asteroida
 putanjaAsteroida = []
@@ -111,43 +141,88 @@ for r in Zemlja.r:
 
 SuncevSustav.tijela.append(Letjelica)
 
-# 1. STUDIJA - jednu točku putanje asteroida gađamo iz svake točke putanje Zemlje
+N_ukupno = len(SuncevSustav.time)
+
+print(f"Ukupan broj koraka: {N_ukupno}")
+
+# # 1. STUDIJA - jednu točku putanje asteroida gađamo iz svake točke putanje Zemlje
 
 # fig = plt.figure()
-# plt.title('Graf')
 # plt.axis('equal')
 # plt.title("Sudar asteroida sa planetom")
 # plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
-# plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+# plt.ylim(-5*udaljenostZemlje, 2*udaljenostZemlje)
 
+# indeksi_lista = []
+# udaljenosti_lista = []
 
-# for i in range(20):
+# for i in range(400, 2500, 100):
 #   print(f"Vrtnja {i}")
+#   indeksi_lista.append(i)
 #   SuncevSustav.resetSystem() # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-#   SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=i, N_do_pogotka=50)
-#   SuncevSustav.evolve()
+#   SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=i, N_do_pogotka=3900)
+#   SuncevSustav.evolve(dt = DT)
 #   SuncevSustav.skiciraj()
-#   # print(f"broj letjelica: {len(Letjelica.r)}")
-#   # print(f"broj zemalja: {len(Zemlja.r)}")
 #   # SuncevSustav.animiraj()
+#   min = SuncevSustav.getMinimumDistance(Zemlja, Asteroid)
+#   print(f"Udaljenost je: {min/radijusZemlje}")
+#   udaljenosti_lista.append(min/radijusZemlje)
 
+# plt.savefig("study1.png")
 # plt.show()
 
-# 2. STUDIJA - svaku točku putanje asteroida gađamo iz jedne točke putanje Zemlje
+# fig = plt.figure()
+# plt.title("Ovisnost minimalne udaljenosti asteroida i Zemlje o točki polijetanja letjelice")
+# plt.plot(indeksi_lista, udaljenosti_lista)
+# y = []
+# for i in indeksi_lista:
+#   y.append(1)
+# plt.plot(indeksi_lista, y, color="red", linestyle="dashed")
+# plt.xlabel('i_Zemlje')
+# plt.ylabel('d_min / rad_Z')
+# plt.savefig("graf-study1.png")
+# plt.show()
+
+
+# # 2. STUDIJA - svaku točku putanje asteroida gađamo iz jedne točke putanje Zemlje
 
 fig = plt.figure()
-plt.title('Graf')
 plt.axis('equal')
-plt.title("Sudar asteroida sa planetom")
+plt.title("Gađanje asteroida letjelicom")
 plt.xlim(-2*udaljenostZemlje, 2*udaljenostZemlje)
-plt.ylim(-2*udaljenostZemlje, 2*udaljenostZemlje)
+plt.ylim(-5*udaljenostZemlje, 2*udaljenostZemlje)
+plt.xlabel('x/m')
+plt.ylabel('y/m')
 
-for i in range(12, 50):
+indeksi_lista = []
+udaljenosti_lista = []
+
+for i in range(1600, 5000, 100):
   print(f"Vrtnja {i}")
+  indeksi_lista.append(i)
   SuncevSustav.resetSystem() # postavlja sva tijela na početne uvjete kako bi došlo do sudara asteroida sa Zemljom
-  SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=10, N_do_pogotka=i)
-  SuncevSustav.evolve()
+  SuncevSustav.launch(Letjelica, putanjaAsteroida, putanjaZemlje, N_do_lansiranja=500, N_do_pogotka=i)
+  SuncevSustav.evolve(dt = DT)
   SuncevSustav.skiciraj()
   # SuncevSustav.animiraj()
+  min = SuncevSustav.getMinimumDistance(Zemlja, Asteroid)
+  print(f"Udaljenost je: {min/radijusZemlje}")
+  udaljenosti_lista.append(min/radijusZemlje)
 
+plt.savefig("study2.png")
+plt.legend()
 plt.show()
+
+fig = plt.figure()
+# plt.axis('equal')
+plt.title("Ovisnost minimalne udaljenosti asteroida i Zemlje o točki udara letjelice")
+plt.plot(indeksi_lista, udaljenosti_lista)
+y = []
+for i in indeksi_lista:
+  y.append(1)
+plt.plot(indeksi_lista, y, color="red", linestyle="dashed")
+plt.xlabel('i_Zemlje')
+plt.ylabel('d_min / rad_Z')
+plt.savefig("graf-study2.png")
+plt.show()
+
