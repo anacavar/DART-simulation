@@ -13,14 +13,16 @@ class Sustav():
         self.ZemljaPogodjenaBoolean = False
         self.min_udaljenost = []
 
-    def reverseEvolve(self, dt=60*60, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11):
+    def reverseEvolve(self, dt=60*60, t= 2*60*60*24*365.25, max_distance=2*1.495978707*10**11, metoda="RK"):
         self.dt = dt
         # u svakom trenutku pomaknemo svaki planet za jedan korak
         while self.time[-1]<t:
             for tijelo in self.tijela:
                 tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
-                # tijelo.move(-dt) # Eulerova metoda
-                self.__move_RungeKutta(tijelo, -dt) # Runge Kutta metoda
+                if(metoda=="RK"):
+                    self.__move_RungeKutta(tijelo, dt) # Runge Kutta metoda
+                elif(metoda=="euler"):
+                    tijelo.move(dt) # Eulerova metoda
             self.time.append(self.time[-1]+dt)
             # ako je udaljenost asteroida veća od maksimalne prekini gibanje
             # asteroid_distance = np.sqrt(np.dot(self.asteroid.r[-1], self.asteroid.r[-1])) #absolute distance from the Sun
@@ -30,7 +32,7 @@ class Sustav():
                 self.N_koraka = len(self.time)-1
                 break
 
-    def evolve(self, dt=60*60, t = 2*60*60*24*365.25):
+    def evolve(self, dt=60*60, t = 2*60*60*24*365.25, metoda="RK"):
         self.ZemljaPogodjenaBoolean = False
         # u svakom trenutku pomaknemo svaki planet za jedan korak
         for i in range(self.N_koraka):
@@ -41,8 +43,10 @@ class Sustav():
                         tijelo.move(dt)
                 else:
                     tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
-                    # tijelo.move(dt) # Eulerova metoda
-                    self.__move_RungeKutta(tijelo, dt) # Runge Kutta metoda
+                    if(metoda=="RK"):
+                        self.__move_RungeKutta(tijelo, dt) # Runge Kutta metoda
+                    elif(metoda=="euler"):
+                        tijelo.move(dt) # Eulerova metoda
             self.time.append(self.time[-1]+dt)
             # provjerimo je li došlo do sudara asteroida i planeta
             # self.__zemlja_pogodjena()
@@ -239,7 +243,7 @@ class Sustav():
             zemlja = self.tijela[3]
         # isključujemo gravitacijsko djelovanje za letjelicu
         if (tijelo.id == "letjelica"):
-            return 0*tijelo.v[-1]
+            return 0#*tijelo.v[-1]
         # računamo ukupnu akceleraciju na pojedini planet
         F_ukupna = np.array((0, 0))
         for tijelo_i in tijela:
