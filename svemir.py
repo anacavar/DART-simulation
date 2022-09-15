@@ -20,7 +20,7 @@ class Sustav():
             for tijelo in self.tijela:
                 tijelo.a.append(self.__gravitacija_na_tijelo(tijelo))
                 if(metoda=="RK"):
-                    self.__move_RungeKutta(tijelo, dt) # Runge Kutta metoda
+                    self.__move_RungeKutta(tijelo, -dt) # Runge Kutta metoda
                 elif(metoda=="euler"):
                     tijelo.move(dt) # Eulerova metoda
             self.time.append(self.time[-1]+dt)
